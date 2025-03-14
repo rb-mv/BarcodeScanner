@@ -9,19 +9,17 @@ import UIKit
 import AVFoundation
 
 
-enum CameraError: String {
-    case invalidDeviceInput     = "Something is wrong with camera. We are unable to capture the input. :("
-    case invalidScannedValue    = "The value scanned is not valid. This app scans EAN-8 and EAN-13 barcode types."
-    
-    
+enum CameraError {
+    case invalidDeviceInput
+    case invalidScannedValue
 }
-
 
 
 protocol ScannerVCDelegate: AnyObject {
     func didFind(barcode: String) //Протокол для общения UIKit (UIKit передает функцию didFind в Coordinator, а он в свою очередь в SwiftUI
     func didSurface(error: CameraError)
 }
+
 
 final class ScannerVC: UIViewController {
     let captureSession = AVCaptureSession() // Захват того, что изображено на камере
@@ -35,6 +33,20 @@ final class ScannerVC: UIViewController {
     
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupCaptureSession()
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        guard let previewLayer = previewLayer else {
+            scannerDelegate.didSurface(error: .invalidDeviceInput)
+            return
+        }
+        previewLayer.frame = view.layer.bounds
+    }
     
     
     
@@ -102,6 +114,7 @@ extension ScannerVC: AVCaptureMetadataOutputObjectsDelegate {
             return
         }
         
+        //captureSession.stopRunning()
         scannerDelegate.didFind(barcode: barcode)
         
     }
